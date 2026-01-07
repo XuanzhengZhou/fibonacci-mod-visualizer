@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>斐波那契数列Mod周期可视化</title>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, Arial, sans-serif;
+            padding: 16px;
+            background-color: #f5f5f5;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        label {
+            font-weight: 500;
+            color: #555;
+        }
+        
+        input, select, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        input[type="number"] {
+            width: 80px;
+        }
+        
+        button {
+            background-color: #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #e0e0e0;
+        }
+        
+        button.primary {
+            background-color: #1f77b4;
+            color: white;
+        }
+        
+        button.primary:hover {
+            background-color: #1a659e;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .sequences-panel {
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 16px;
+            background-color: white;
+        }
+        
+        .sequences-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .sequences-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+        
+        .sequence-item {
+            text-align: left;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 2px solid #ccc;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+        
+        .sequence-item.selected {
+            background: #fafafa;
+        }
+        
+        .color-box {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        
+        .sequence-content {
+            flex: 1;
+            margin: 0 8px;
+            font-family: monospace;
+            text-align: left;
+        }
+        
+        .length-badge {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+        
+        .grid-panel {
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 16px;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .grid-container {
+            position: relative;
+            width: 100%;
+            height: 70vh;
+            min-height: 500px;
+            overflow: auto;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            background: #fff;
+        }
+        
+        .grid {
+            margin: 0 auto;
+            display: grid;
+            box-sizing: content-box;
+        }
+        
+        .cell {
+            border: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            line-height: 1.1;
+            color: black;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            pointer-events: none;
+            z-index: 10;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transform: translate(-50%, -120%);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            color: crimson;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .info-text {
+            color: #666;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>斐波那契数列Mod周期可视化</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="base-input">选择进制：</label>
+                <input type="number" id="base-input" min="1" value="4">
+            </div>
+            
+            <div class="control-group">
+                <label for="order-select">排序：</label>
+                <select id="order-select">
+                    <option value="original">原始顺序</option>
+                    <option value="lenAsc">按长度 ↑</option>
+                    <option value="lenDesc">按长度 ↓</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <input type="checkbox" id="show-labels-checkbox">
+                <label for="show-labels-checkbox">显示坐标文字</label>
+            </div>
+            
+            <button id="reset-selection-btn">取消选择</button>
+            <button id="export-btn">导出图像</button>
+        </div>
+        
+        <div id="loading" class="loading" style="display: none;">计算中...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div id="content" class="content" style="display: none;">
+            <div class="sequences-panel">
+                <div class="sequences-header">
+                    <h3>数列 (<span id="total-count">0</span> 个，已选 <span id="selected-count">0</span>)</h3>
+                </div>
+                <div id="sequences-list" class="sequences-list"></div>
+            </div>
+            
+            <div class="grid-panel">
+                <h3>二维表格</h3>
+                <div id="grid-container" class="grid-container">
+                    <div id="grid" class="grid"></div>
+                    <div id="tooltip" class="tooltip" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 颜色调色板
+        const PALETTE = [
+            '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
+            '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
+            '#bcbd22', '#17becf', '#393b79', '#637939'
+        ];
+
+        // 应用状态
+        const state = {
+            base: 4,
+            data: null,
+            active: {},
+            order: 'original',
+            showLabels: false,
+            loading: false,
+            error: null
+        };
+
+        // DOM元素
+        const elements = {
+            baseInput: document.getElementById('base-input'),
+            orderSelect: document.getElementById('order-select'),
+            showLabelsCheckbox: document.getElementById('show-labels-checkbox'),
+            resetSelectionBtn: document.getElementById('reset-selection-btn'),
+            exportBtn: document.getElementById('export-btn'),
+            loading: document.getElementById('loading'),
+            error: document.getElementById('error'),
+            content: document.getElementById('content'),
+            totalCount: document.getElementById('total-count'),
+            selectedCount: document.getElementById('selected-count'),
+            sequencesList: document.getElementById('sequences-list'),
+            gridContainer: document.getElementById('grid-container'),
+            grid: document.getElementById('grid'),
+            tooltip: document.getElementById('tooltip')
+        };
+
+        // 初始化应用
+        function init() {
+            // 绑定事件监听器
+            elements.baseInput.addEventListener('change', onBaseChange);
+            elements.orderSelect.addEventListener('change', onOrderChange);
+            elements.showLabelsCheckbox.addEventListener('change', onShowLabelsChange);
+            elements.resetSelectionBtn.addEventListener('click', resetSelection);
+            elements.exportBtn.addEventListener('click', exportImage);
+            
+            // 初始化数据
+            calculateCycles();
+        }
+
+        // 事件处理函数
+        function onBaseChange(e) {
+            const value = parseInt(e.target.value);
+            if (!isNaN(value) && value >= 1) {
+                state.base = value;
+                calculateCycles();
+            }
+        }
+
+        function onOrderChange(e) {
+            state.order = e.target.value;
+            renderSequences();
+        }
+
+        function onShowLabelsChange(e) {
+            state.showLabels = e.target.checked;
+            renderGrid();
+        }
+
+        function resetSelection() {
+            state.active = {};
+            renderSequences();
+            renderGrid();
+            updateSelectedCount();
+        }
+
+        // 计算周期数据
+        function calculateCycles() {
+            state.loading = true;
+            state.error = null;
+            updateUI();
+            
+            // 使用setTimeout让UI更新显示loading状态
+            setTimeout(() => {
+                try {
+                    const data = computeCycles(state.base);
+                    state.data = data;
+                    state.active = {};
+                    state.loading = false;
+                    renderSequences();
+                    renderGrid();
+                    updateCounts();
+                } catch (err) {
+                    state.loading = false;
+                    state.error = err.message || '计算错误';
+                }
+                updateUI();
+            }, 50);
+        }
+
+        // 核心算法：计算周期
+        function computeCycles(base) {
+            // 确保base是正整数
+            if (!Number.isInteger(base) || base < 1) {
+                throw new Error('进制数必须是大于0的整数');
+            }
+            
+            // 为了避免浏览器卡死，对非常大的base值增加警告
+            if (base > 500) {
+                if (!confirm(`进制数 ${base} 可能需要较长时间计算，是否继续？`)) {
+                    throw new Error('用户取消计算');
+                }
+            }
+            
+            const visited = new Set();
+            const cycles = [];
+
+            // 对于大进制数，增加进度提示
+            const totalIterations = base * base;
+            let completedIterations = 0;
+            const startTime = performance.now();
+            const progressText = document.getElementById('progress-text');
+
+            for (let a0 = 0; a0 < base; a0++) {
+                for (let b0 = 0; b0 < base; b0++) {
+                    const s = `${a0},${b0}`;
+                    if (visited.has(s)) continue;
+
+                    const path = [];
+                    const seenIndex = new Map();
+                    let current = [a0, b0];
+
+                    // 限制路径长度以防止无限循环
+                    let iterations = 0;
+                    const maxIterations = Math.min(base * base * 2, 100000); // 增加上限以防止极端情况
+                    
+                    while (!seenIndex.has(current.join(',')) && iterations < maxIterations) {
+                        const key = current.join(',');
+                        seenIndex.set(key, path.length);
+                        path.push([...current]);
+                        current = [current[1], (current[0] + current[1]) % base];
+                        iterations++;
+                    }
+
+                    // 提取循环部分
+                    const start = seenIndex.get(current.join(','));
+                    const cycleStates = path.slice(start);
+
+                    // 标记整个路径为已访问
+                    for (const node of path) {
+                        visited.add(node.join(','));
+                    }
+
+                    if (cycleStates.length > 0) {
+                        // 规范化循环（可选）
+                        let minIdx = 0;
+                        for (let i = 1; i < cycleStates.length; i++) {
+                            if (comparePairs(cycleStates[i], cycleStates[minIdx]) < 0) {
+                                minIdx = i;
+                            }
+                        }
+                        const canonical = [...cycleStates.slice(minIdx), ...cycleStates.slice(0, minIdx)];
+                        cycles.push(canonical);
+                    }
+                    
+                    // 更新进度
+                    completedIterations++;
+                    if (base > 50 && completedIterations % Math.floor(totalIterations / 20) === 0) {
+                        const elapsed = performance.now() - startTime;
+                        const progress = Math.round(completedIterations / totalIterations * 100);
+                        if (progressText) {
+                            progressText.textContent = `计算进度: ${progress}% (${completedIterations}/${totalIterations})`;
+                        }
+                        console.log(`计算进度: ${progress}% (${completedIterations}/${totalIterations}, ${elapsed}ms)`);
+                    }
+                }
+            }
+
+            // 去重
+            const unique = [];
+            const seen = new Set();
+            for (const cyc of cycles) {
+                const key = cyc.map(p => p.join(',')).join(';');
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    unique.push(cyc);
+                }
+            }
+
+            // 提取序列（每个循环的第一个元素序列）
+            const sequences = unique.map(cyc => cyc.map(p => p[0]));
+
+            return {
+                base: base,
+                sequences: sequences,
+                cycles_pairs: unique
+            };
+        }
+
+        // 比较两个坐标对
+        function comparePairs(a, b) {
+            if (a[0] !== b[0]) return a[0] - b[0];
+            return a[1] - b[1];
+        }
+
+        // 将序列转换为循环坐标对
+        function makePairsCircular(seq) {
+            const pairs = [];
+            if (seq.length === 0) return pairs;
+            for (let i = 0; i < seq.length; i++) {
+                const a = seq[i];
+                const b = seq[(i + 1) % seq.length];
+                pairs.push([a, b]);
+            }
+            return pairs;
+        }
+
+        // 更新计数显示
+        function updateCounts() {
+            if (!state.data) return;
+            elements.totalCount.textContent = state.data.sequences.length;
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const count = Object.values(state.active).filter(Boolean).length;
+            elements.selectedCount.textContent = count;
+        }
+
+        // 渲染序列列表
+        function renderSequences() {
+            if (!state.data) return;
+            
+            const sequences = getOrderedSequences();
+            elements.sequencesList.innerHTML = '';
+            
+            sequences.forEach(({ seq, idx, len }) => {
+                const color = PALETTE[idx % PALETTE.length];
+                const isSelected = !!state.active[idx];
+                
+                const item = document.createElement('div');
+                item.className = `sequence-item ${isSelected ? 'selected' : ''}`;
+                item.style.borderColor = isSelected ? color : '#ccc';
+                item.style.background = isSelected ? '#fafafa' : 'white';
+                
+                item.innerHTML = `
+                    <div class="color-box" style="background-color: ${color};"></div>
+                    <div class="sequence-content">[${seq.join(', ')}]</div>
+                    <div class="length-badge" style="border: 1px solid ${color}; color: ${color};">
+                        长度 ${len}
+                    </div>
+                `;
+                
+                item.addEventListener('click', () => toggleSequence(idx));
+                elements.sequencesList.appendChild(item);
+            });
+        }
+
+        // 获取排序后的序列
+        function getOrderedSequences() {
+            if (!state.data) return [];
+            
+            const arr = state.data.sequences.map((seq, idx) => ({ 
+                seq, 
+                idx, 
+                len: seq.length 
+            }));
+            
+            if (state.order === 'lenAsc') {
+                arr.sort((a, b) => (a.len - b.len) || (a.idx - b.idx));
+            } else if (state.order === 'lenDesc') {
+                arr.sort((a, b) => (b.len - a.len) || (a.idx - b.idx));
+            }
+            
+            return arr;
+        }
+
+        // 切换序列选择状态
+        function toggleSequence(idx) {
+            state.active[idx] = !state.active[idx];
+            const item = elements.sequencesList.children[idx];
+            if (item) {
+                const color = PALETTE[idx % PALETTE.length];
+                if (state.active[idx]) {
+                    item.classList.add('selected');
+                    item.style.borderColor = color;
+                    item.style.background = '#fafafa';
+                } else {
+                    item.classList.remove('selected');
+                    item.style.borderColor = '#ccc';
+                    item.style.background = 'white';
+                }
+            }
+            renderGrid();
+            updateSelectedCount();
+        }
+
+        // 渲染网格
+        function renderGrid() {
+            if (!state.data) return;
+            
+            // 对于大进制数，简化网格渲染以提高性能
+            const isLargeGrid = state.data.base > 100;
+            
+            // 构建单元格数据
+            const gridData = buildGridData();
+            const { cells, size } = gridData;
+            
+            // 计算网格尺寸
+            const containerRect = elements.gridContainer.getBoundingClientRect();
+            const side = Math.min(containerRect.width, containerRect.height - 100);
+            const cellPx = Math.max(2, Math.floor(side / size)); // 对大网格减小最小单元格大小
+            const gridSidePx = cellPx * size;
+            const fontPx = isLargeGrid ? 0 : Math.max(8, Math.floor(cellPx * 0.28)); // 大网格不显示文字
+            
+            // 设置网格样式
+            elements.grid.style.gridTemplateColumns = `repeat(${size}, ${cellPx}px)`;
+            elements.grid.style.gridTemplateRows = `repeat(${size}, ${cellPx}px)`;
+            elements.grid.style.width = `${gridSidePx}px`;
+            elements.grid.style.height = `${gridSidePx}px`;
+            
+            // 生成单元格键的顺序（从 y=size-1 到 0）
+            const keys = [];
+            for (let y = size - 1; y >= 0; y--) {
+                for (let x = 0; x < size; x++) {
+                    keys.push(`${x},${y}`);
+                }
+            }
+            
+            // 清空网格
+            elements.grid.innerHTML = '';
+            
+            // 创建单元格
+            keys.forEach(key => {
+                const items = cells[key] || [];
+                const bgColor = items.length > 0 ? items[items.length - 1].color : "white";
+                
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.style.background = bgColor;
+                cell.style.fontSize = `${fontPx}px`;
+                
+                // 大网格不显示坐标文字以提高性能
+                if (!isLargeGrid && state.showLabels && items.length > 0) {
+                    cell.textContent = `(${key})`;
+                }
+                
+                // 添加鼠标事件处理（大网格不添加以提高性能）
+                if (!isLargeGrid) {
+                    cell.addEventListener('mouseenter', (e) => {
+                        showTooltip(e, key);
+                    });
+                    
+                    cell.addEventListener('mouseleave', hideTooltip);
+                }
+                
+                elements.grid.appendChild(cell);
+            });
+            
+            // 添加网格容器的鼠标事件处理（用于显示坐标提示，大网格不添加以提高性能）
+            if (!isLargeGrid) {
+                elements.gridContainer.addEventListener('mousemove', handleMouseMove);
+                elements.gridContainer.addEventListener('mouseleave', hideTooltip);
+            }
+        }
+
+        // 构建网格数据
+        function buildGridData() {
+            const cells = {};
+            if (!state.data) return { cells, size: state.base };
+
+            state.data.sequences.forEach((seq, idx) => {
+                if (!state.active[idx]) return;
+                const color = PALETTE[idx % PALETTE.length];
+                const pairs = makePairsCircular(seq);
+                pairs.forEach(([x, y]) => {
+                    const key = `${x},${y}`;
+                    if (!cells[key]) cells[key] = [];
+                    cells[key].push({ label: `(${x},${y})`, color });
+                });
+            });
+
+            return { cells, size: state.data.base };
+        }
+
+        // 鼠标移动处理（用于显示当前坐标）
+        function handleMouseMove(e) {
+            if (!state.data) return;
+            
+            const containerRect = elements.gridContainer.getBoundingClientRect();
+            const gridRect = elements.grid.getBoundingClientRect();
+            
+            // 检查鼠标是否在网格区域内
+            if (e.clientX < gridRect.left || e.clientX > gridRect.right || 
+                e.clientY < gridRect.top || e.clientY > gridRect.bottom) {
+                hideTooltip();
+                return;
+            }
+            
+            // 计算鼠标在网格内的相对像素
+            const rx = e.clientX - gridRect.left;
+            const ry = e.clientY - gridRect.top;
+            
+            // 基于像素位置计算坐标
+            const cellPx = Math.max(6, Math.floor(Math.min(containerRect.width, containerRect.height - 100) / state.data.base));
+            const col = Math.min(Math.floor(rx / cellPx), state.data.base - 1);
+            const rowFromTop = Math.min(Math.floor(ry / cellPx), state.data.base - 1);
+            const x = Math.max(0, Math.min(col, state.data.base - 1));
+            const y = Math.max(0, Math.min(state.data.base - 1 - rowFromTop, state.data.base - 1)); // 转成我们用的 y 轴朝上
+            
+            // 计算 tooltip 在 container 内的绝对定位（随鼠标）
+            const tx = e.clientX - containerRect.left + 12;
+            const ty = e.clientY - containerRect.top + 12;
+            
+            showTooltipAtPosition(tx, ty, `(${x},${y})`);
+        }
+
+        // 显示提示框
+        function showTooltip(e, text) {
+            const containerRect = elements.gridContainer.getBoundingClientRect();
+            const x = e.clientX - containerRect.left + 12;
+            const y = e.clientY - containerRect.top + 12;
+            
+            elements.tooltip.textContent = text;
+            elements.tooltip.style.left = `${x}px`;
+            elements.tooltip.style.top = `${y}px`;
+            elements.tooltip.style.display = 'block';
+        }
+        
+        // 在指定位置显示提示框
+        function showTooltipAtPosition(x, y, text) {
+            elements.tooltip.textContent = text;
+            elements.tooltip.style.left = `${x}px`;
+            elements.tooltip.style.top = `${y}px`;
+            elements.tooltip.style.display = 'block';
+        }
+
+        // 隐藏提示框
+        function hideTooltip() {
+            elements.tooltip.style.display = 'none';
+        }
+
+        // 更新UI状态
+        function updateUI() {
+            // 更新输入控件
+            elements.baseInput.value = state.base;
+            
+            // 更新加载状态
+            if (state.loading) {
+                elements.loading.style.display = 'block';
+                elements.error.style.display = 'none';
+                elements.content.style.display = 'none';
+            } else if (state.error) {
+                elements.loading.style.display = 'none';
+                elements.error.style.display = 'block';
+                elements.error.textContent = `错误: ${state.error}`;
+                elements.content.style.display = 'none';
+            } else {
+                elements.loading.style.display = 'none';
+                elements.error.style.display = 'none';
+                elements.content.style.display = 'grid';
+            }
+            
+            // 更新复选框状态
+            elements.showLabelsCheckbox.checked = state.showLabels;
+            
+            // 更新排序选择
+            elements.orderSelect.value = state.order;
+        }
+
+        // 导出图像功能
+        function exportImage() {
+            if (!state.data) {
+                alert('请先计算数据');
+                return;
+            }
+            
+            // 创建一个临时的canvas来绘制网格
+            const canvas = document.createElement('canvas');
+            const cellSize = 20; // 每个单元格的大小
+            const gridSize = state.data.base;
+            const padding = 50; // 为标签留出空间
+            
+            // 限制画布最大尺寸
+            const maxCanvasSize = 4000; // 限制最大4000x4000像素
+            const actualCellSize = Math.min(cellSize, Math.floor(maxCanvasSize / gridSize));
+            
+            canvas.width = Math.min(gridSize * actualCellSize + padding * 2, maxCanvasSize);
+            canvas.height = Math.min(gridSize * actualCellSize + padding * 2, maxCanvasSize);
+            
+            const ctx = canvas.getContext('2d');
+            
+            // 填充白色背景
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制标题
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`斐波那契数列Mod ${state.data.base} 周期可视化`, canvas.width / 2, 30);
+            
+            // 如果网格过大，提示用户
+            if (gridSize > 100) {
+                ctx.font = '16px Arial';
+                ctx.fillText('网格较大，仅显示可视化结果', canvas.width / 2, 50);
+            }
+            
+            // 绘制网格
+            const offsetX = (canvas.width - gridSize * actualCellSize) / 2;
+            const offsetY = 70; // 为标题留出空间
+            
+            // 构建网格数据
+            const gridData = buildGridData();
+            const { cells } = gridData;
+            
+            // 绘制每个单元格
+            for (let y = gridSize - 1; y >= 0; y--) {
+                for (let x = 0; x < gridSize; x++) {
+                    const key = `${x},${y}`;
+                    const items = cells[key] || [];
+                    const bgColor = items.length > 0 ? items[items.length - 1].color : "white";
+                    
+                    const cellX = offsetX + x * actualCellSize;
+                    const cellY = offsetY + (gridSize - 1 - y) * actualCellSize; // 翻转Y轴
+                    
+                    // 绘制单元格
+                    ctx.fillStyle = bgColor;
+                    ctx.fillRect(cellX, cellY, actualCellSize, actualCellSize);
+                    
+                    // 绘制边框
+                    ctx.strokeStyle = '#ddd';
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(cellX, cellY, actualCellSize, actualCellSize);
+                    
+                    // 如果是大网格，不绘制坐标标签
+                    if (gridSize <= 32 && state.showLabels && items.length > 0) {
+                        ctx.fillStyle = 'black';
+                        ctx.font = `${Math.max(8, actualCellSize / 3)}px Arial`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(`(${x},${y})`, cellX + actualCellSize / 2, cellY + actualCellSize / 2);
+                    }
+                }
+            }
+            
+            // 将canvas转换为图像并下载
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `fibonacci-mod-${state.data.base}-cycles.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        // 页面加载完成后初始化应用
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
