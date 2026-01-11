@@ -96,37 +96,25 @@ g++ -std=c++11 -O3 -o cpp/fibonacci_mod src/fibonacci_mod.cpp
 ./cpp/fibonacci_mod 10000 > data.json # 保存到文件
 ```
 
-### 2. 交互式命令行工具（Python）
+### 2. 交互式可视化工具 (python/fibonacci_cli_visualizer.py)
 
-#### 完整版可视化工具
+#### 功能结构
+- `FibonacciVisualizer` 类：核心可视化功能
+- 交互式菜单系统：支持计算、选择、可视化、导出等功能
+- matplotlib 图表生成：生成普通和高分辨率图表
 
-`python/fibonacci_cli_visualizer.py` - 功能完整的交互式可视化工具
+#### 算法实现
+- `run_cpp_program`: 调用C++程序执行计算
+- `parse_range_input`: 解析用户输入的序列范围
+- `generate_visualization`: 生成可视化图表
+  - 创建网格数据，将每个状态对映射到颜色
+  - 使用颜色强度表示序列长度（短序列更鲜艳）
+  - 生成两个图表：普通图表和高分辨率网格
 
-**功能特性**：
-- 交互式菜单操作
-- 支持灵活的范围选择语法（如：`1-3,5,8-10`）
-- 生成高质量matplotlib图表
-- **双图输出**：正常尺寸图 + 高分辨率大图
-- 支持导出PNG图片
-- 彩色图例显示
-
-**依赖安装**：
-```bash
-pip3 install matplotlib numpy
-```
-
-**运行方法**：
-```bash
-cd ~/python
-python3 python/fibonacci_cli_visualizer.py
-```
-
-**双图输出说明**：
-- **图1（正常版）**：14×7英寸，150 DPI，适合快速预览
-- **图2（高清版）**：动态尺寸（最小20×20英寸），300 DPI，适合详细分析和打印
-  - 自适应尺寸计算：确保每个格子至少10×10像素
-  - 添加细网格线，提高可读性
-  - 智能坐标标签显示（大网格时自动稀疏化）
+#### 可视化方法
+- 网格坐标 (x, y) 表示序列中的相邻两项 (F[i], F[i+1])
+- 不同序列使用不同颜色，并根据长度调整颜色强度
+- 生成包含图例和信息的复合图表
 
 #### 轻量级ASCII可视化工具
 
@@ -197,6 +185,7 @@ bash scripts/compile.sh
 pip3 install matplotlib numpy
 
 # 运行工具
+**重要提醒：运行Python脚本前请先进入 `/python` 工作目录！**
 python3 python/fibonacci_cli_visualizer.py
 ```
 
@@ -339,7 +328,7 @@ vector<Pair> canonicalCycle(const vector<Pair>& cycle) {
 **坐标映射**：
 - x坐标：数对的第一个值 (a)
 - y坐标：数对的第二个值 (b)
-- 颜色：不同的周期使用不同颜色
+- 颜色：不同的周期使用不同颜色(从短周期数列到长周期数列颜色从鲜艳到暗淡)
 
 **实现步骤**：
 ```python
