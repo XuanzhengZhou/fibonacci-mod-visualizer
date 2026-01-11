@@ -117,6 +117,7 @@ pip3 install matplotlib numpy
 
 **运行方法**：
 ```bash
+cd ~/python
 python3 python/fibonacci_cli_visualizer.py
 ```
 
