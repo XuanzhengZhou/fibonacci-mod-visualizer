@@ -29,6 +29,8 @@
 │   └── fibonacci_mod                # C++程序（编译后生成）
 ├── python/                          # Python工具
 │   ├── fibonacci_cli_visualizer.py # 交互式可视化工具（完整版）
+│   ├── fibonacci_cli_3d_visualizer.py # 3D可视化工具（立方体高度表示周期）
+│   ├── fibonacci_cli_merge_visualizer.py # 2D/3D合并可视化工具
 │   └── fibonacci_cli_simple.py     # 轻量级ASCII可视化工具
 ├── web/                             # 网页版工具
 │   └── fibonacci-mod-visualizer.html # 浏览器可视化界面
@@ -116,6 +118,48 @@ g++ -std=c++11 -O3 -o cpp/fibonacci_mod src/fibonacci_mod.cpp
 - 不同序列使用不同颜色，并根据长度调整颜色强度
 - 生成包含图例和信息的复合图表
 
+#### 3D可视化工具
+
+`python/fibonacci_cli_3d_visualizer.py` - 3D可视化工具，使用立方体高度表示序列周期长度
+
+**特性**：
+- 3D可视化，立方体高度表示序列周期长度
+- 所有立方体大小相同，但高度不同
+- 配色方案与2D版本保持一致
+- 从多个角度保存图片
+
+**运行方法**：
+```bash
+python3 python/fibonacci_cli_3d_visualizer.py
+```
+
+#### 2D/3D合并可视化工具
+
+`python/fibonacci_cli_merge_visualizer.py` - 同时生成2D和3D可视化，按下'y'键保存时同时保存2D和3D图片
+
+**特性**：
+- 同时生成2D和3D可视化结果
+- 2D可视化包括普通带图例的图表和高分辨率网格图
+- 3D可视化使用顶部立方体，高度表示序列周期长度
+- 保存时自动保存2D、高分辨率2D和3D（多角度）图片
+- 高分辨率2D图每个单元格为10x10像素，DPI为300
+
+**保存的文件**：
+- `fibonacci_mod_{base}_2d_visualization.png` - 2D带图例的可视化图
+- `fibonacci_mod_{base}_2d_highres_grid.png` - 高分辨率2D网格图
+- `fibonacci_mod_{base}_3d_visualization_main.png` - 3D主视角图
+- `fibonacci_mod_{base}_3d_visualization_side_1.png` - 3D侧视角图1
+- `fibonacci_mod_{base}_3d_visualization_side_2.png` - 3D侧视角图2
+- `fibonacci_mod_{base}_3d_visualization_side_3.png` - 3D侧视角图3
+- `fibonacci_mod_{base}_3d_visualization_top.png` - 3D顶部视角图
+- `fibonacci_mod_{base}_3d_visualization_front.png` - 3D前方视角图
+- `fibonacci_mod_{base}_3d_visualization_side.png` - 3D侧方视角图
+
+**运行方法**：
+```bash
+python3 python/fibonacci_cli_merge_visualizer.py
+```
+
 #### 轻量级ASCII可视化工具
 
 `python/fibonacci_cli_simple.py` - 无需外部依赖的轻量级工具
@@ -189,7 +233,25 @@ pip3 install matplotlib numpy
 python3 python/fibonacci_cli_visualizer.py
 ```
 
-**选项B：轻量级版**
+**选项B：3D可视化版**
+```bash
+# 安装依赖
+pip3 install matplotlib numpy
+
+# 运行3D可视化工具
+python3 python/fibonacci_cli_3d_visualizer.py
+```
+
+**选项C：2D/3D合并可视化版（推荐）**
+```bash
+# 安装依赖
+pip3 install matplotlib numpy
+
+# 运行2D/3D合并可视化工具
+python3 python/fibonacci_cli_merge_visualizer.py
+```
+
+**选项D：轻量级版**
 ```bash
 python3 python/fibonacci_cli_simple.py
 ```
@@ -556,21 +618,6 @@ bash scripts/compile.sh
 - Python代码遵循PEP 8
 - 添加必要的注释和文档
 
-## 许可证
-
-本项目采用MIT许可证。详见项目根目录的LICENSE文件（如有）。
-
-## 致谢
-
-- 斐波那契数列的数学性质研究
-- Pisano周期的相关理论
-- matplotlib和numpy开源项目
-
-## 联系方式
-
-如有问题或建议，请：
-- 提交Issue到项目仓库
-- 查看 `docs/` 目录下的详细文档
 
 ## 相关链接
 
